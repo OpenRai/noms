@@ -1,0 +1,10 @@
+{
+  "name": "noms-workspace",
+  "private": true,
+  "packageManager": "pnpm@10.0.0",
+  "scripts": {
+    "build": "pnpm --filter @openrai/noms build",
+    "test": "pnpm --filter @openrai/noms test"
+  },
+  "devDependencies": {}
+}

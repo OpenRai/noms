@@ -1,0 +1,27 @@
+{
+  "oris_revision": "OpenRai/Standards@256f9186271d2ea414e7e35fef65446fa0a151c5",
+  "source": "https://github.com/OpenRai/Standards/blob/256f9186271d2ea414e7e35fef65446fa0a151c5/rfcs/ORIS-001.md",
+  "keypair": {
+    "private_key": "681fd5ed71a9f81e9d29e3450f6cd8aacb87346fd21a26003389290b9d0cb173",
+    "public_key": "d2b3c9d00ffb55e84e7979d67308a515fb07ca79e40a77eb1aafe62881781783",
+    "account": "nano_3noms9a1zytox399kygpge6cc7hu1z79ms1cgzojodz8741qi7w5u3nzb8mn"
+  },
+  "vectors": [
+    {
+      "name": "unicode-emoji",
+      "message": "Hej Nano!🥦",
+      "message_utf8_hex": "48656a204e616e6f21f09fa5a6",
+      "payload_hex": "184e616e6f204f66662d636861696e204d6573736167653a0a0000000d48656a204e616e6f21f09fa5a6",
+      "digest": "33ce285b257df1ba87e1a91f32211a3b900ab4fdf68bebb3f75bef4b85aef951",
+      "signature": "535c745819d0f40056f3c46402b4fae4356b3a8897bde99c955d411920e740d781e6dddcbde228e8b86c4383a1003f9f315519ff73bd356f561d19865dc90f09"
+    },
+    {
+      "name": "empty",
+      "message": "",
+      "message_utf8_hex": "",
+      "payload_hex": "184e616e6f204f66662d636861696e204d6573736167653a0a00000000",
+      "digest": "977a10e19a7857eefad986d73b071bbb7dad60846c7785f6d0ccffe0d7bd40b9",
+      "signature": "8fca45d1490a276ac9d4376d9251df3a1069f673013c33d49f3490077066f174d7fb6795b966e1d9078952ad065f836b35cd82d402cbeb63f9ace94b2123c506"
+    }
+  ]
+}

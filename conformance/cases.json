@@ -1,0 +1,23 @@
+{
+  "malformed": [
+    { "input": "private key shorter than 32 bytes", "expected": "error" },
+    { "input": "signature with invalid hex", "expected": "error" },
+    { "input": "account with invalid prefix or checksum", "expected": "error" },
+    { "input": "unpaired UTF-16 surrogate", "expected": "error" }
+  ],
+  "negative": [
+    { "input": "message differs from signed message", "expected": "false" },
+    { "input": "signature differs by one bit", "expected": "false" },
+    { "input": "account resolves to another public key", "expected": "false" }
+  ],
+  "boundary_messages": [
+    "",
+    "a\u0000b",
+    "line\nbreak",
+    "line\r\nbreak",
+    " left/right ",
+    "é",
+    "e\u0301",
+    "🥦"
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "name": "@openrai/noms",
+  "version": "0.1.0",
+  "description": "Nano Off-chain Message Signing reference implementation",
+  "repository": { "type": "git", "url": "https://github.com/OpenRai/noms.git" },
+  "engines": { "node": ">=20" },
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" }
+  },
+  "bin": { "noms": "./dist/cli.js" },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json && chmod +x dist/cli.js",
+    "test": "vitest run",
+    "test:api": "tsc -p test/api/tsconfig.json",
+    "prepublishOnly": "pnpm build && pnpm test"
+  },
+  "dependencies": {
+    "@noble/hashes": "^1.8.0",
+    "tweetnacl-blake2b": "^1.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.6.0",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.2"
+  },
+  "publishConfig": { "access": "public" }
+}
