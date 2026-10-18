@@ -1,0 +1,19 @@
+[package]
+name = "noms-cli"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Command-line interface for Nano Off-chain Message Signing"
+repository = "https://github.com/OpenRai/noms"
+readme = "README.md"
+keywords = ["nano", "signing", "oris"]
+categories = ["command-line-utilities", "cryptography"]
+
+[[bin]]
+name = "noms"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4.5", features = ["derive"] }
+noms = { path = "../noms", version = "0.1.0" }
+rpassword = "7.4"

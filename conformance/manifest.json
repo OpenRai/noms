@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "standards_repository": "OpenRai/Standards",
+  "source_revision": "88b96c6f4238699724a166509773d5892b99d1a9",
+  "base_revision": "88b96c6f4238699724a166509773d5892b99d1a9",
+  "spec_sha256": "ff934e4212ace180c83c3bfe54dffa40421e55140d31e98560725dac4a2564f0",
+  "generator_sha256": "194427461d70fb972258f0fe2c6aaafdfa2f39a4281bb54302739ba68b80e9e4",
+  "suite_sha256": "d1d813279a48d06f961f3b46523e26aaca2eefb53f3f7ec85e1e5de147374a57",
+  "case_count": 306
+}

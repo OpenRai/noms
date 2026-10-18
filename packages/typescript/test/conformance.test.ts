@@ -4,6 +4,7 @@ import {
   accountFromPublicKey,
   encodePayload,
   hashMessage,
+  parsePayload,
   publicKeyFromAccount,
   publicKeyFromPrivateKey,
   signMessage,
@@ -14,8 +15,8 @@ const vectors = JSON.parse(readFileSync(new URL('../../../conformance/vectors.js
   keypair: { private_key: string; public_key: string; account: string };
   vectors: Array<{ name: string; message: string; payload_hex: string; digest: string; signature: string }>;
 };
-const cases = JSON.parse(readFileSync(new URL('../../../conformance/cases.json', import.meta.url), 'utf8')) as {
-  boundary_messages: string[];
+const cases = JSON.parse(readFileSync(new URL('../../../conformance/suite.json', import.meta.url), 'utf8')) as {
+  cases: Array<{ id: string; operation: string; input: { message?: string; payload_hex?: string } }>;
 };
 const hex = (bytes: Uint8Array) => Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
 
@@ -37,7 +38,7 @@ describe('ORIS-001 conformance', () => {
   });
 
   it('preserves exact Unicode, line endings, whitespace, and normalization forms', () => {
-    const messages = cases.boundary_messages;
+    const messages = cases.cases.filter((test) => test.operation === 'inspect' && test.input.message !== undefined).map((test) => test.input.message!);
     expect(new Set(messages.map((message) => hex(hashMessage(message)))).size).toBe(messages.length);
   });
 
@@ -59,5 +60,14 @@ describe('ORIS-001 conformance', () => {
   it('enforces the documented practical size limit', () => {
     expect(encodePayload('a'.repeat(16 * 1024 * 1024)).length).toBe(16 * 1024 * 1024 + 29);
     expect(() => encodePayload('a'.repeat(16 * 1024 * 1024 + 1))).toThrow('16 MiB');
+  });
+
+  it('round-trips exact framed UTF-8 and rejects malformed frames', () => {
+    const message = 'nano\0e\u0301 🥦';
+    expect(parsePayload(encodePayload(message))).toBe(message);
+    for (const test of cases.cases.filter((entry) => entry.operation === 'parse_frame')) {
+      const payload = Uint8Array.from(test.input.payload_hex.match(/../g) ?? [], (part) => Number.parseInt(part, 16));
+      expect(() => parsePayload(payload), test.id).toThrow();
+    }
   });
 });

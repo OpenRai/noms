@@ -1,4 +1,9 @@
 node_modules/
 dist/
+site-dist/
 target/
 .DS_Store
+artifacts/
+playwright-report/
+test-results/
+*.tgz

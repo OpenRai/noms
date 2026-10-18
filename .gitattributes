@@ -1,0 +1,2 @@
+# Fixture and provenance hashes must not depend on checkout platform.
+* text=auto eol=lf

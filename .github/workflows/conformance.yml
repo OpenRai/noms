@@ -1,0 +1,59 @@
+name: NOMS conformance
+on:
+  workflow_call:
+    inputs:
+      extended:
+        type: boolean
+        default: false
+jobs:
+  matrix:
+    name: Conformance (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      NOMS_TEST_SEED: ${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.0.0
+      - uses: dtolnay/rust-toolchain@stable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm conformance:core
+      - run: node scripts/check-artifacts.mjs
+      - name: Install browser engines
+        if: runner.os == 'Linux'
+        run: pnpm exec playwright install --with-deps chromium firefox webkit
+      - name: Oracle, browser, and mutation checks
+        if: runner.os == 'Linux'
+        run: pnpm conformance:security
+      - name: Extended differential campaign
+        if: runner.os == 'Linux' && inputs.extended
+        run: node scripts/check-conformance.mjs --extended
+      - name: Extended independent oracle checks
+        if: runner.os == 'Linux' && inputs.extended
+        run: node scripts/check-nano-oracle.mjs
+      - name: Bounded fuzz campaigns
+        if: runner.os == 'Linux' && inputs.extended
+        run: node scripts/check-fuzz.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: conformance-${{ matrix.os }}
+          path: artifacts/conformance/
+          if-no-files-found: error
+  required:
+    name: Required conformance
+    if: always()
+    needs: matrix
+    runs-on: ubuntu-latest
+    steps:
+      - run: test "$RESULT" = success
+        env:
+          RESULT: ${{ needs.matrix.result }}

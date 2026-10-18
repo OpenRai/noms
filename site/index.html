@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Try and verify Nano Off-chain Message Signing (ORIS-001) in your browser." />
+    <title>NOMS playground</title>
+  </head>
+  <body>
+    <main>
+      <header>
+        <p class="eyebrow">ORIS-001 reference interoperability</p>
+        <h1>NOMS playground</h1>
+        <p>Use a <a href="https://nano.org/">Nano</a> account to sign a message or verify a signature. Signing and verification happen in this browser tab.</p>
+      </header>
+
+      <aside class="warning" role="note">
+        This page has no backend and does not send your key material anywhere. But a compromised site or browser could expose a real wallet seed. Use a test seed with no funds.
+      </aside>
+
+      <section aria-labelledby="account-heading">
+        <h2 id="account-heading">Nano account</h2>
+        <div class="key-actions">
+          <div class="seed-field">
+            <div class="seed-actions">
+              <button id="generate-seed" type="button">Generate test seed</button>
+              <button id="toggle-seed" type="button" class="secondary" aria-pressed="false">Show seed</button>
+            </div>
+            <label for="seed">Nano seed (64 hex characters)</label>
+            <input id="seed" type="text" autocomplete="off" spellcheck="false" inputmode="text" data-revealed="false" />
+          </div>
+          <div class="account-index-field">
+            <label for="account-index">Account index (uint32)</label>
+            <input id="account-index" type="number" min="0" max="4294967295" step="1" value="0" autocomplete="off" />
+          </div>
+          <div class="derived-account-field">
+            <label for="derived-account">Derived Nano account</label>
+            <output id="derived-account" class="mono" aria-live="polite"></output>
+          </div>
+        </div>
+      </section>
+
+      <div id="tool-tabs" class="tool-tabs" role="tablist" aria-label="NOMS tools">
+        <button id="sign-tab" class="mode-tab" type="button" role="tab" aria-selected="true" aria-controls="sign-panel" tabindex="0">Sign</button>
+        <button id="verify-tab" class="mode-tab" type="button" role="tab" aria-selected="false" aria-controls="verify-panel" aria-label="Verify" tabindex="-1">
+          Verify <span id="verify-notification" class="tab-notification" aria-hidden="true" hidden>*</span>
+        </button>
+      </div>
+
+      <section id="sign-panel" class="tab-panel" role="tabpanel" aria-labelledby="sign-tab" tabindex="0">
+        <h2 id="sign-heading">Sign a message</h2>
+        <label for="sign-message">Message</label>
+        <textarea id="sign-message" rows="4" autocomplete="off" spellcheck="false">Hej Nano!🥦</textarea>
+        <button id="sign" type="button">Sign message</button>
+        <label for="signature-output">Signature</label>
+        <textarea id="signature-output" class="mono" rows="3" autocomplete="off" readonly></textarea>
+        <details>
+          <summary>Show payload and digest</summary>
+          <label for="payload-output">Payload (hex)</label>
+          <textarea id="payload-output" class="mono" rows="3" autocomplete="off" readonly></textarea>
+          <label for="digest-output">Blake2b-256 digest (hex)</label>
+          <input id="digest-output" class="mono" autocomplete="off" readonly />
+        </details>
+      </section>
+
+      <section id="verify-panel" class="tab-panel" role="tabpanel" aria-labelledby="verify-tab" tabindex="0" hidden>
+        <h2 id="verify-heading">Verify a signature</h2>
+        <label for="verify-message">Exact message</label>
+        <textarea id="verify-message" rows="4" autocomplete="off" spellcheck="false" aria-describedby="verify-message-error" aria-invalid="false">Hej Nano!🥦</textarea>
+        <small id="verify-message-error" class="field-error"></small>
+        <label for="verify-account">Nano account</label>
+        <input id="verify-account" class="mono" autocomplete="off" spellcheck="false" aria-describedby="verify-account-error" aria-invalid="false" />
+        <small id="verify-account-error" class="field-error"></small>
+        <label for="verify-signature">Signature (128 hex characters)</label>
+        <textarea id="verify-signature" class="mono" rows="3" autocomplete="off" spellcheck="false" aria-describedby="verify-signature-error" aria-invalid="false"></textarea>
+        <small id="verify-signature-error" class="field-error"></small>
+        <div id="verification-status" class="verification-status" data-state="incomplete" role="status" aria-live="polite" aria-atomic="true">
+          <span class="verification-mark" aria-hidden="true"></span>
+          <output id="verification-result">Enter valid inputs to verify.</output>
+        </div>
+      </section>
+
+      <section aria-labelledby="vectors-heading">
+        <h2 id="vectors-heading">Known-answer checks</h2>
+        <p>Check this browser implementation against the vectors pinned to the ORIS-001 revision.</p>
+        <button id="self-test" type="button">Run self-test</button>
+        <output id="self-test-result" aria-live="polite"></output>
+      </section>
+
+      <footer>
+        <button id="clear" type="button" class="secondary">Clear inputs</button>
+        <p><a href="https://github.com/OpenRai/Standards/blob/main/rfcs/ORIS-001.md">ORIS-001</a> is normative. This page is a reference tool, not a wallet.</p>
+      </footer>
+      <output id="error" class="error" role="alert" aria-live="assertive"></output>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

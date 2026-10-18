@@ -1,10 +1,22 @@
 {
   "name": "noms-workspace",
   "private": true,
-  "packageManager": "pnpm@10.0.0",
+  "packageManager": "pnpm@12.14.0",
   "scripts": {
-    "build": "pnpm --filter @openrai/noms build",
-    "test": "pnpm --filter @openrai/noms test"
+    "build": "pnpm --filter @openrai/noms build && pnpm --filter @openrai/noms-site build",
+    "test": "pnpm --filter @openrai/noms test && pnpm --filter @openrai/noms-site test",
+    "site:build": "pnpm --filter @openrai/noms-site build",
+    "noms-site": "pnpm site:build && pnpm --filter @openrai/noms-site preview --host 127.0.0.1",
+    "release:npm:patch": "pnpm --filter @openrai/noms run release:patch",
+    "release:npm:minor": "pnpm --filter @openrai/noms run release:minor",
+    "release:npm:major": "pnpm --filter @openrai/noms run release:major",
+    "conformance:fixtures": "node scripts/check-fixtures.mjs",
+    "conformance:core": "pnpm conformance:fixtures && pnpm build && pnpm --filter @openrai/noms test:api && pnpm test && cargo fmt --all -- --check && cargo clippy --all-targets --all-features --locked -- -D warnings && cargo test --workspace --locked && cargo build --workspace --locked && cargo build --locked --release -p noms --examples && node --test scripts/test-corpus.mjs && node scripts/check-conformance.mjs && node scripts/check-cli-interop.mjs",
+    "conformance:security": "node scripts/check-nano-oracle.mjs && pnpm exec playwright test && node scripts/check-mutations.mjs",
+    "conformance": "pnpm conformance:core && node scripts/check-artifacts.mjs && pnpm conformance:security",
+    "conformance:extended": "pnpm conformance && node scripts/check-conformance.mjs --extended && node scripts/check-nano-oracle.mjs && node scripts/check-fuzz.mjs"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@playwright/test": "1.64.1"
+  }
 }

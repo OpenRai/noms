@@ -1,5 +1,18 @@
-import { blake2b } from '@noble/hashes/blake2b';
-import nacl from 'tweetnacl-blake2b';
+import { blake2b } from '@noble/hashes/blake2.js';
+import { ed25519 } from '@noble/curves/ed25519.js';
+import { eddsa } from '@noble/curves/abstract/edwards.js';
+import { bytesToNumberLE, concatBytes } from '@noble/curves/utils.js';
+import { decodeCanonicalPoint } from './point.js';
+
+const nanoEdDSA = eddsa(ed25519.Point, blake2b, {
+  zip215: false,
+  adjustScalarBytes(bytes: Uint8Array) {
+    bytes[0]! &= 248;
+    bytes[31]! &= 127;
+    bytes[31]! |= 64;
+    return bytes;
+  },
+});
 
 const HEADER = Uint8Array.from([
   0x18, 0x4e, 0x61, 0x6e, 0x6f, 0x20, 0x4f, 0x66, 0x66, 0x2d, 0x63, 0x68,
@@ -18,7 +31,7 @@ export class NomsInputError extends Error {
 }
 
 function bytesFromHex(value: string, bytes: number, field: string): Uint8Array {
-  if (!new RegExp(`^(?:[0-9a-fA-F]{2}){${bytes}}$`).test(value)) {
+  if (typeof value !== 'string' || value.length !== bytes * 2 || /[^0-9a-fA-F]/.test(value)) {
     throw new NomsInputError(`${field} must be exactly ${bytes * 2} hexadecimal characters`);
   }
   return Uint8Array.from(value.match(/../g)!, (part) => Number.parseInt(part, 16));
@@ -54,23 +67,50 @@ function decodeInteger(value: string, byteLength: number): Uint8Array {
 
 export function encodePayload(message: string): Uint8Array {
   if (typeof message !== 'string') throw new NomsInputError('message must be a string');
+  let byteLength = 0;
   for (let index = 0; index < message.length; index += 1) {
     const unit = message.charCodeAt(index);
     if (unit >= 0xd800 && unit <= 0xdbff) {
       const next = message.charCodeAt(index + 1);
       if (Number.isNaN(next) || next < 0xdc00 || next > 0xdfff) throw new NomsInputError('message contains an unpaired UTF-16 surrogate');
       index += 1;
+      byteLength += 4;
     } else if (unit >= 0xdc00 && unit <= 0xdfff) {
       throw new NomsInputError('message contains an unpaired UTF-16 surrogate');
+    } else {
+      byteLength += unit < 0x80 ? 1 : unit < 0x800 ? 2 : 3;
     }
+    if (byteLength > MAX_MESSAGE_BYTES) throw new NomsInputError('message exceeds the 16 MiB implementation limit');
   }
   const encoded = encoder.encode(message);
-  if (encoded.length > MAX_MESSAGE_BYTES) throw new NomsInputError('message exceeds the 16 MiB implementation limit');
   const payload = new Uint8Array(HEADER.length + 4 + encoded.length);
   payload.set(HEADER);
   new DataView(payload.buffer).setUint32(HEADER.length, encoded.length, false);
   payload.set(encoded, HEADER.length + 4);
   return payload;
+}
+
+/** Parses an exact ORIS-001 frame and returns its UTF-8 message. */
+export function parsePayload(payload: Uint8Array): string {
+  if (!(payload instanceof Uint8Array) || payload.length < HEADER.length + 4) {
+    throw new NomsInputError('payload is a truncated NOMS frame');
+  }
+  for (let index = 0; index < HEADER.length; index += 1) {
+    if (payload[index] !== HEADER[index]) throw new NomsInputError('payload has an invalid NOMS header');
+  }
+  const messageLength = new DataView(payload.buffer, payload.byteOffset, payload.byteLength)
+    .getUint32(HEADER.length, false);
+  if (messageLength > MAX_MESSAGE_BYTES) throw new NomsInputError('message exceeds the 16 MiB implementation limit');
+  const messageStart = HEADER.length + 4;
+  if (payload.length !== messageStart + messageLength) {
+    throw new NomsInputError('payload length does not match the NOMS frame');
+  }
+  try {
+    return new TextDecoder('utf-8', { fatal: true, ignoreBOM: true })
+      .decode(payload.subarray(messageStart));
+  } catch {
+    throw new NomsInputError('payload message is not valid UTF-8');
+  }
 }
 
 export function hashMessage(message: string): Uint8Array {
@@ -79,23 +119,27 @@ export function hashMessage(message: string): Uint8Array {
 
 export function signMessage(message: string, privateKey: string): string {
   const seed = bytesFromHex(privateKey, 32, 'privateKey');
-  const keyPair = nacl.sign.keyPair.fromSeed(seed);
-  return Array.from(nacl.sign.detached(hashMessage(message), keyPair.secretKey), (byte) => byte.toString(16).padStart(2, '0')).join('');
+  const signature = nanoEdDSA.sign(hashMessage(message), seed);
+  if (ed25519.Point.fromBytes(signature.subarray(0, 32), false).is0()) {
+    throw new NomsInputError('derived signing nonce is zero');
+  }
+  return Array.from(signature, (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
 export function publicKeyFromPrivateKey(privateKey: string): Uint8Array {
-  return nacl.sign.keyPair.fromSeed(bytesFromHex(privateKey, 32, 'privateKey')).publicKey;
+  return nanoEdDSA.getPublicKey(bytesFromHex(privateKey, 32, 'privateKey'));
 }
 
 export function accountFromPublicKey(publicKey: Uint8Array): string {
-  if (publicKey.length !== 32) throw new NomsInputError('publicKey must be 32 bytes');
+  if (!(publicKey instanceof Uint8Array) || publicKey.length !== 32) throw new NomsInputError('publicKey must be 32 bytes');
   const checksum = blake2b(publicKey, { dkLen: 5 }).reverse();
   return `nano_${encodeInteger(publicKey, 52)}${encodeInteger(checksum, 8)}`;
 }
 
 export function publicKeyFromAccount(account: string): Uint8Array {
+  if (typeof account !== 'string') throw new NomsInputError('account must be a string');
   const match = /^(nano|xrb)_([13456789abcdefghijkmnopqrstuwxyz]{60})$/.exec(account);
-  if (!match) throw new NomsInputError('account must be a valid lowercase nano_ or xrb_ address');
+  if (!match || match[0].length !== account.length) throw new NomsInputError('account must be a valid lowercase nano_ or xrb_ address');
   const encoded = match[2]!;
   const publicKey = decodeInteger(encoded.slice(0, 52), 32);
   const suppliedChecksum = decodeInteger(encoded.slice(52), 5);
@@ -109,5 +153,17 @@ export function publicKeyFromAccount(account: string): Uint8Array {
 export function verifyMessage(message: string, signature: string, account: string): boolean {
   const signatureBytes = bytesFromHex(signature, 64, 'signature');
   const publicKey = publicKeyFromAccount(account);
-  return nacl.sign.detached.verify(hashMessage(message), signatureBytes, publicKey);
+  const digest = hashMessage(message);
+  try {
+    const a = decodeCanonicalPoint(publicKey);
+    const r = decodeCanonicalPoint(signatureBytes.subarray(0, 32));
+    if (a.is0() || r.is0() || !a.isTorsionFree() || !r.isTorsionFree()) return false;
+    const order = ed25519.Point.Fn.ORDER;
+    const s = bytesToNumberLE(signatureBytes.subarray(32));
+    if (s >= order) return false;
+    const challenge = bytesToNumberLE(blake2b(concatBytes(signatureBytes.subarray(0, 32), publicKey, digest))) % order;
+    return ed25519.Point.BASE.multiplyUnsafe(s % order).equals(r.add(a.multiplyUnsafe(challenge)));
+  } catch {
+    return false;
+  }
 }

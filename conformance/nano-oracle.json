@@ -1,0 +1,179 @@
+{
+  "repository": "nanocurrency/nano-node",
+  "revision": "0d8eea4524b8da626cbab50c286c48eae25c76a9",
+  "release": "V28.2",
+  "files": [
+    {
+      "path": "crypto/blake2/COPYING",
+      "sha": "0e259d42c996742e9e3cba14c677129b2c1b6311"
+    },
+    {
+      "path": "crypto/blake2/README.md",
+      "sha": "2190bcaf58b11db2db398d985268c6e3eee57453"
+    },
+    {
+      "path": "crypto/blake2/blake2-config.h",
+      "sha": "5d4e3753105da85ee83d233133273eba5f1242af"
+    },
+    {
+      "path": "crypto/blake2/blake2-impl.h",
+      "sha": "c1df82e0c95dc8e57ee98342f5328ca57407816d"
+    },
+    {
+      "path": "crypto/blake2/blake2.h",
+      "sha": "c99d2da324cb47f14f8215225200048342aa6fe0"
+    },
+    {
+      "path": "crypto/blake2/blake2b-compress-avx2.h",
+      "sha": "d763261e7962d97172fb293aa9ea0fea3df97056"
+    },
+    {
+      "path": "crypto/blake2/blake2b-load-avx2-simple.h",
+      "sha": "1c29c23d616d603e059f5fadd8d625fdecb94e19"
+    },
+    {
+      "path": "crypto/blake2/blake2b-load-avx2.h",
+      "sha": "28278f40871a667060de8a2764a635a6653b64ae"
+    },
+    {
+      "path": "crypto/blake2/blake2b-load-sse2.h",
+      "sha": "23a8d40bdb91f1930ea2311db22b1769aacc0938"
+    },
+    {
+      "path": "crypto/blake2/blake2b-load-sse41.h",
+      "sha": "0eca865999bf4414fecf121c74116748b9d8bcfd"
+    },
+    {
+      "path": "crypto/blake2/blake2b-ref.c",
+      "sha": "752f8e3ade4abfff27bd3f5a260656551a07a2cd"
+    },
+    {
+      "path": "crypto/blake2/blake2b-round.h",
+      "sha": "6537fff329e00b02b4fb57524b1b84a908f5ba08"
+    },
+    {
+      "path": "crypto/blake2/blake2b.c",
+      "sha": "234699a8c09a5b2c690338dd2e75940ab8dacc9f"
+    },
+    {
+      "path": "crypto/ed25519-donna/curve25519-donna-32bit.h",
+      "sha": "b0861acf0383cd390368314c300be07f65fbc0f7"
+    },
+    {
+      "path": "crypto/ed25519-donna/curve25519-donna-64bit.h",
+      "sha": "6b923d313b5af1c96f28797f2f04a770175d5e4b"
+    },
+    {
+      "path": "crypto/ed25519-donna/curve25519-donna-helpers.h",
+      "sha": "e4058ff5ec7dbfc012379be216eefbd897487226"
+    },
+    {
+      "path": "crypto/ed25519-donna/curve25519-donna-sse2.h",
+      "sha": "1dbfd44d8b7a256eaf0098b46cebce31646cb699"
+    },
+    {
+      "path": "crypto/ed25519-donna/ed25519-donna-32bit-sse2.h",
+      "sha": "db04a13d3f2f28cb856c54abbb1a598476c75e4a"
+    },
+    {
+      "path": "crypto/ed25519-donna/ed25519-donna-32bit-tables.h",
+      "sha": "c977c26ebc49ba76b81496407c547d3c64d2763a"
+    },
+    {
+      "path": "crypto/ed25519-donna/ed25519-donna-64bit-sse2.h",
+      "sha": "ca08651d67042128c9c07a48bbc68b31bdb82a10"
+    },
+    {
+      "path": "crypto/ed25519-donna/ed25519-donna-64bit-tables.h",
+      "sha": "4a6ff9edae94a47e80c401262b996a0cc1c1d42d"
+    },
+    {
+      "path": "crypto/ed25519-donna/ed25519-donna-64bit-x86-32bit.h",
+      "sha": "1ce109c5b7f71b1b44c53e4ce2b1701ca2724dda"
+    },
+    {
+      "path": "crypto/ed25519-donna/ed25519-donna-64bit-x86.h",
+      "sha": "30bd472762c1738ff6c1932681c08e107655825b"
+    },
+    {
+      "path": "crypto/ed25519-donna/ed25519-donna-basepoint-table.h",
+      "sha": "41dcd526a22c3aa6a7219dc69749252829afa77c"
+    },
+    {
+      "path": "crypto/ed25519-donna/ed25519-donna-batchverify.h",
+      "sha": "cba751bee1c21cc298ad27c805afd9eeadd47db3"
+    },
+    {
+      "path": "crypto/ed25519-donna/ed25519-donna-impl-base.h",
+      "sha": "48913edcb442f6ea5688b074710cd82e9c3609cc"
+    },
+    {
+      "path": "crypto/ed25519-donna/ed25519-donna-impl-sse2.h",
+      "sha": "5fe3416381f632768abba58759308c13579bc238"
+    },
+    {
+      "path": "crypto/ed25519-donna/ed25519-donna-portable-identify.h",
+      "sha": "26a264cf9ed7a74fb685c73ca98387fcd3792a53"
+    },
+    {
+      "path": "crypto/ed25519-donna/ed25519-donna-portable.h",
+      "sha": "d01160f8a11f85ce6a4c2bbf70036994ec5f2b23"
+    },
+    {
+      "path": "crypto/ed25519-donna/ed25519-donna.h",
+      "sha": "de1120f46fad780c817a58a8c1894fbebcc9d202"
+    },
+    {
+      "path": "crypto/ed25519-donna/ed25519-hash-custom.h",
+      "sha": "3f136b9205dc85eea8432efd2f59a6817a633af4"
+    },
+    {
+      "path": "crypto/ed25519-donna/ed25519-hash.h",
+      "sha": "6ba8f52383846d9f181ab19b400b400e7b986529"
+    },
+    {
+      "path": "crypto/ed25519-donna/ed25519-randombytes-custom.h",
+      "sha": "9818555faba0a9faad11ec9af8858a52dc049ef9"
+    },
+    {
+      "path": "crypto/ed25519-donna/ed25519-randombytes.h",
+      "sha": "53d1c3fe1ea88a93fc3ddbac5d677b27dac06f49"
+    },
+    {
+      "path": "crypto/ed25519-donna/ed25519.c",
+      "sha": "d120c414d06f9b57f35871fa23dd1081e45b39ea"
+    },
+    {
+      "path": "crypto/ed25519-donna/ed25519.h",
+      "sha": "dc86675cd184116b41fca51c615082c2a9cb8ae3"
+    },
+    {
+      "path": "crypto/ed25519-donna/modm-donna-32bit.h",
+      "sha": "dfd76be6688f45c80c5ddd0fa1e6bfdb7c9b2edf"
+    },
+    {
+      "path": "crypto/ed25519-donna/modm-donna-64bit.h",
+      "sha": "a47a38a42d4842d660295e811623ddb72a73efba"
+    },
+    {
+      "path": "crypto/ed25519-donna/regression.h",
+      "sha": "b4c2e62c0a67fa394da3039829c5248d6d0fa5f0"
+    },
+    {
+      "path": "crypto/ed25519-donna/test-internals.c",
+      "sha": "3c67df516eb3c3cd8613fab0e5bd4d1a15c6a552"
+    },
+    {
+      "path": "crypto/ed25519-donna/test-ticks.h",
+      "sha": "0103e03dde10b0f37b52feae76b4a69bc4c031cd"
+    },
+    {
+      "path": "crypto/ed25519-donna/test.c",
+      "sha": "61544925035fd1598596c149fad116b887c2022a"
+    },
+    {
+      "path": "nano/crypto/blake2/blake2.h",
+      "sha": "51481b2e4a0ac738ddb97b150f0630ead671154e"
+    }
+  ]
+}

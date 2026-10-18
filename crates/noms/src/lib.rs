@@ -45,6 +45,31 @@ pub fn encode_payload(message: &str) -> Result<Vec<u8>, NomsError> {
     Ok(payload)
 }
 
+/// Parses an exact ORIS-001 frame and returns its UTF-8 message.
+pub fn parse_payload(payload: &[u8]) -> Result<String, NomsError> {
+    if payload.len() < HEADER.len() + 4 {
+        return Err(invalid("payload is a truncated NOMS frame"));
+    }
+    if &payload[..HEADER.len()] != HEADER {
+        return Err(invalid("payload has an invalid NOMS header"));
+    }
+    let message_length = u32::from_be_bytes(
+        payload[HEADER.len()..HEADER.len() + 4]
+            .try_into()
+            .map_err(|_| invalid("payload is a truncated NOMS frame"))?,
+    ) as usize;
+    if message_length > MAX_MESSAGE_BYTES {
+        return Err(invalid("message exceeds the 16 MiB implementation limit"));
+    }
+    let message_start = HEADER.len() + 4;
+    if payload.len() != message_start + message_length {
+        return Err(invalid("payload length does not match the NOMS frame"));
+    }
+    std::str::from_utf8(&payload[message_start..])
+        .map(str::to_owned)
+        .map_err(|_| invalid("payload message is not valid UTF-8"))
+}
+
 /// Computes the 32-byte Blake2b digest of the ORIS-001 payload.
 pub fn hash_message(message: &str) -> Result<[u8; 32], NomsError> {
     let payload = encode_payload(message)?;
@@ -86,6 +111,9 @@ pub fn sign_message(message: &str, private_key: &[u8; 32]) -> Result<[u8; 64], N
     nonce_input.extend_from_slice(&digest);
     let nonce_hash = hash512(&nonce_input);
     let nonce = Scalar::from_bytes_mod_order_wide(&nonce_hash);
+    if nonce == Scalar::ZERO {
+        return Err(invalid("derived signing nonce is zero"));
+    }
     let encoded_r = (nonce * ED25519_BASEPOINT_POINT).compress().to_bytes();
     let public_key = public_key_from_private_key(private_key);
 
@@ -102,29 +130,45 @@ pub fn sign_message(message: &str, private_key: &[u8; 32]) -> Result<[u8; 64], N
     Ok(signature)
 }
 
-/// Verifies a NOMS signature against a Nano account address (`nano_` or `xrb_`).
+// Canonical decoding is separate from subgroup membership so both rules can
+// be checked directly, even when another validation would reject the input.
+fn decode_canonical_point(bytes: [u8; 32]) -> Option<curve25519_dalek::edwards::EdwardsPoint> {
+    let point = CompressedEdwardsY(bytes).decompress()?;
+    if point.compress().to_bytes() != bytes {
+        return None;
+    }
+    Some(point)
+}
+
+/// Verifies a NOMS signature against a Nano account using strict ORIS-001 rules.
 pub fn verify_message(
     message: &str,
     signature: &[u8; 64],
     account: &str,
 ) -> Result<bool, NomsError> {
     let public_key = public_key_from_account(account)?;
-    let r_bytes: [u8; 32] = signature[..32].try_into().expect("fixed signature slice");
-    let s_bytes: [u8; 32] = signature[32..].try_into().expect("fixed signature slice");
+    let digest = hash_message(message)?;
+    let mut r_bytes = [0; 32];
+    r_bytes.copy_from_slice(&signature[..32]);
+    let mut s_bytes = [0; 32];
+    s_bytes.copy_from_slice(&signature[32..]);
     let Some(scalar_s) = Option::<Scalar>::from(Scalar::from_canonical_bytes(s_bytes)) else {
         return Ok(false);
     };
-    let Some(point_r) = CompressedEdwardsY(r_bytes).decompress() else {
+    let Some(point_r) = decode_canonical_point(r_bytes) else {
         return Ok(false);
     };
-    let Some(point_a) = CompressedEdwardsY(public_key).decompress() else {
+    let Some(point_a) = decode_canonical_point(public_key) else {
         return Ok(false);
     };
-    if point_a.is_identity() || point_r.is_identity() {
+    if point_a.is_identity()
+        || point_r.is_identity()
+        || !point_a.is_torsion_free()
+        || !point_r.is_torsion_free()
+    {
         return Ok(false);
     }
 
-    let digest = hash_message(message)?;
     let mut challenge_input = Vec::with_capacity(64 + digest.len());
     challenge_input.extend_from_slice(&r_bytes);
     challenge_input.extend_from_slice(&public_key);
@@ -207,7 +251,7 @@ pub fn public_key_from_account(account: &str) -> Result<[u8; 32], NomsError> {
         .strip_prefix("nano_")
         .or_else(|| account.strip_prefix("xrb_"))
         .ok_or_else(|| invalid("account must use the nano_ or xrb_ prefix"))?;
-    if encoded.len() != 60 {
+    if encoded.len() != 60 || !encoded.is_ascii() {
         return Err(invalid(
             "account must contain exactly 60 Nano base32 characters",
         ));
@@ -236,7 +280,7 @@ pub fn parse_signature(hex: &str) -> Result<[u8; 64], NomsError> {
 }
 
 fn parse_hex<const N: usize>(hex: &str, field: &str) -> Result<[u8; N], NomsError> {
-    if hex.len() != N * 2 {
+    if hex.len() != N * 2 || !hex.bytes().all(|byte| byte.is_ascii_hexdigit()) {
         return Err(invalid(&format!(
             "{field} must be exactly {} hexadecimal characters",
             N * 2
@@ -259,27 +303,34 @@ pub fn to_hex(bytes: &[u8]) -> String {
 mod tests {
     use super::*;
     use serde_json::Value;
-    use std::fs;
 
     #[test]
     fn published_vectors_match_and_cross_verify() {
-        let vector_path = format!(
-            "{}/../../conformance/vectors.json",
-            env!("CARGO_MANIFEST_DIR")
-        );
-        let vectors: Value =
-            serde_json::from_str(&fs::read_to_string(vector_path).unwrap()).unwrap();
-        let key = parse_private_key(vectors["keypair"]["private_key"].as_str().unwrap()).unwrap();
-        let account = vectors["keypair"]["account"].as_str().unwrap();
+        let suite: Value = serde_json::from_str(include_str!("../tests/data/suite.json")).unwrap();
+        let cases = suite["cases"].as_array().unwrap();
+        let first = cases.iter().find(|test| test["id"] == "key-0").unwrap();
+        let key = parse_private_key(first["input"]["private_key"].as_str().unwrap()).unwrap();
+        let account = first["expected"]["account"].as_str().unwrap();
         assert_eq!(
             to_hex(&public_key_from_private_key(&key)),
-            vectors["keypair"]["public_key"].as_str().unwrap()
+            first["expected"]["public_key"].as_str().unwrap()
         );
-        for vector in vectors["vectors"].as_array().unwrap() {
-            let message = vector["message"].as_str().unwrap();
-            let expected_payload = vector["payload_hex"].as_str().unwrap();
-            let expected_digest = vector["digest"].as_str().unwrap();
-            let expected_signature = vector["signature"].as_str().unwrap();
+        for vector in cases
+            .iter()
+            .filter(|test| test["operation"] == "inspect" && test["input"]["message"].is_string())
+        {
+            let message = vector["input"]["message"].as_str().unwrap();
+            let expected_payload = vector["expected"]["payload_hex"].as_str().unwrap();
+            let expected_digest = vector["expected"]["digest"].as_str().unwrap();
+            let signing = cases
+                .iter()
+                .find(|test| {
+                    test["operation"] == "sign"
+                        && test["input"]["message"] == message
+                        && test["input"]["private_key"] == first["input"]["private_key"]
+                })
+                .unwrap();
+            let expected_signature = signing["expected"]["signature"].as_str().unwrap();
             assert_eq!(to_hex(&encode_payload(message).unwrap()), expected_payload);
             assert_eq!(to_hex(&hash_message(message).unwrap()), expected_digest);
             let signature = sign_message(message, &key).unwrap();
@@ -289,13 +340,47 @@ mod tests {
     }
 
     #[test]
-    fn exact_text_changes_the_digest() {
-        let vector_path = format!(
-            "{}/../../conformance/cases.json",
-            env!("CARGO_MANIFEST_DIR")
+    fn shared_framed_input_cases_match() {
+        let suite: Value = serde_json::from_str(include_str!("../tests/data/suite.json")).unwrap();
+        for test in suite["cases"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter(|test| test["operation"] == "parse_frame")
+        {
+            let input = test["input"]["payload_hex"].as_str().unwrap();
+            let bytes: Vec<_> = input
+                .as_bytes()
+                .as_chunks::<2>()
+                .0
+                .iter()
+                .map(|pair| u8::from_str_radix(std::str::from_utf8(pair).unwrap(), 16))
+                .collect::<Result<_, _>>()
+                .unwrap();
+            assert!(parse_payload(&bytes).is_err(), "{}", test["id"]);
+            assert_eq!(test["expected"]["status"], "input_error", "{}", test["id"]);
+        }
+    }
+
+    #[test]
+    fn framed_payload_round_trips_exact_utf8() {
+        let message = "nano\0e\u{301} 🥦";
+        assert_eq!(
+            parse_payload(&encode_payload(message).unwrap()).unwrap(),
+            message
         );
-        let cases: Value = serde_json::from_str(&fs::read_to_string(vector_path).unwrap()).unwrap();
-        let messages = cases["boundary_messages"].as_array().unwrap();
+    }
+
+    #[test]
+    fn exact_text_changes_the_digest() {
+        let cases: Value = serde_json::from_str(include_str!("../tests/data/suite.json")).unwrap();
+        let messages: Vec<_> = cases["cases"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter(|test| test["operation"] == "inspect" && test["input"]["message"].is_string())
+            .map(|test| &test["input"]["message"])
+            .collect();
         let hashes: Vec<_> = messages
             .iter()
             .map(|message| hash_message(message.as_str().unwrap()).unwrap())
@@ -316,5 +401,66 @@ mod tests {
         altered[63] ^= 1;
         assert!(!verify_message("Hej Nano!🥦", &altered, &account).unwrap());
         assert!(public_key_from_account("nano_invalid").is_err());
+    }
+
+    #[test]
+    fn rejects_malformed_key_signature_and_account_inputs() {
+        assert!(parse_private_key("00").is_err());
+        assert!(parse_signature(&"zz".repeat(64)).is_err());
+        assert!(public_key_from_account(
+            "nano_3noms9a1zytox399kygpge6cc7hu1z79ms1cgzojodz8741qi7w5u3nzb8mn "
+        )
+        .is_err());
+    }
+
+    #[test]
+    fn canonical_decoder_rejects_alias_before_subgroup_checks() {
+        let mut alias = [255; 32];
+        alias[0] = 0xee;
+        alias[31] = 0x7f;
+        assert!(decode_canonical_point(alias).is_none());
+    }
+
+    #[test]
+    fn enforces_exact_size_boundary() {
+        assert_eq!(
+            encode_payload(&"a".repeat(MAX_MESSAGE_BYTES))
+                .unwrap()
+                .len(),
+            MAX_MESSAGE_BYTES + 29
+        );
+        assert!(encode_payload(&"a".repeat(MAX_MESSAGE_BYTES + 1)).is_err());
+    }
+
+    #[test]
+    fn shared_adversarial_verification_corpus() {
+        let suite: Value = serde_json::from_str(include_str!("../tests/data/suite.json")).unwrap();
+        for test in suite["cases"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter(|test| test["operation"] == "verify")
+        {
+            let input = &test["input"];
+            let result =
+                parse_signature(input["signature"].as_str().unwrap()).and_then(|signature| {
+                    verify_message(
+                        input["message"].as_str().unwrap(),
+                        &signature,
+                        input["account"].as_str().unwrap(),
+                    )
+                });
+            let status = match result {
+                Ok(true) => "valid",
+                Ok(false) => "invalid",
+                Err(_) => "input_error",
+            };
+            assert_eq!(
+                status,
+                test["expected"]["status"].as_str().unwrap(),
+                "{}",
+                test["id"]
+            );
+        }
     }
 }

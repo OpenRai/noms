@@ -5,6 +5,11 @@ edition = "2021"
 license = "MIT"
 description = "Nano Off-chain Message Signing reference implementation"
 readme = "README.md"
+homepage = "https://github.com/OpenRai/noms"
+repository = "https://github.com/OpenRai/noms"
+documentation = "https://docs.rs/noms"
+keywords = ["nano", "signing", "oris"]
+categories = ["cryptography"]
 
 [dependencies]
 blake2b_simd = "1.0.4"

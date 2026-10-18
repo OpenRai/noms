@@ -1,6 +1,6 @@
 {
-  "oris_revision": "OpenRai/Standards@256f9186271d2ea414e7e35fef65446fa0a151c5",
-  "source": "https://github.com/OpenRai/Standards/blob/256f9186271d2ea414e7e35fef65446fa0a151c5/rfcs/ORIS-001.md",
+  "oris_revision": "OpenRai/Standards@88b96c6f4238699724a166509773d5892b99d1a9",
+  "source": "https://github.com/OpenRai/Standards/tree/main/test-vectors/oris-001",
   "keypair": {
     "private_key": "681fd5ed71a9f81e9d29e3450f6cd8aacb87346fd21a26003389290b9d0cb173",
     "public_key": "d2b3c9d00ffb55e84e7979d67308a515fb07ca79e40a77eb1aafe62881781783",

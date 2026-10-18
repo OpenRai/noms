@@ -2,8 +2,8 @@
   "name": "@openrai/noms",
   "version": "0.1.0",
   "description": "Nano Off-chain Message Signing reference implementation",
-  "repository": { "type": "git", "url": "https://github.com/OpenRai/noms.git" },
-  "engines": { "node": ">=20" },
+  "repository": { "type": "git", "url": "git+https://github.com/OpenRai/noms.git" },
+  "engines": { "node": ">=20.19.0" },
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
@@ -11,17 +11,20 @@
   "exports": {
     ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" }
   },
-  "bin": { "noms": "./dist/cli.js" },
+  "bin": { "noms": "dist/cli.js" },
   "files": ["dist"],
   "scripts": {
-    "build": "tsc -p tsconfig.json && chmod +x dist/cli.js",
+    "build": "tsc -p tsconfig.json && node scripts/chmod-bin.mjs",
     "test": "vitest run",
     "test:api": "tsc -p test/api/tsconfig.json",
+    "release:patch": "pnpm version patch --tag-version-prefix npm-v --message \"release: @openrai/noms %s\"",
+    "release:minor": "pnpm version minor --tag-version-prefix npm-v --message \"release: @openrai/noms %s\"",
+    "release:major": "pnpm version major --tag-version-prefix npm-v --message \"release: @openrai/noms %s\"",
     "prepublishOnly": "pnpm build && pnpm test"
   },
   "dependencies": {
-    "@noble/hashes": "^1.8.0",
-    "tweetnacl-blake2b": "^1.0.1"
+    "@noble/hashes": "2.2.0",
+    "@noble/curves": "2.2.0"
   },
   "devDependencies": {
     "@types/node": "^24.6.0",

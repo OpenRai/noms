@@ -1,0 +1,41 @@
+:root {
+  color-scheme: light dark;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  line-height: 1.5;
+  color: #172126;
+  background: #f3f7f5;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; padding: 2rem 1rem; }
+main { max-width: 52rem; margin: 0 auto; }
+header { margin-bottom: 1.5rem; }
+h1 { margin: 0; font-size: clamp(2rem, 6vw, 3.4rem); line-height: 1.1; }
+h2 { margin-top: 0; }
+.eyebrow { color: #08754f; font-size: .82rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+section, .warning { margin: 1rem 0; padding: 1.25rem; border: 1px solid #cbd8d2; border-radius: .75rem; background: white; }
+.warning { border-color: #ce9f43; background: #fff8e8; }
+label { display: block; margin: .9rem 0 .3rem; font-weight: 650; }
+input, textarea { width: 100%; min-height: 2.7rem; padding: .65rem .75rem; border: 1px solid #9baaa2; border-radius: .4rem; font: inherit; }
+textarea { resize: vertical; }
+button { margin: .8rem .4rem .4rem 0; padding: .65rem 1rem; border: 0; border-radius: .4rem; color: white; background: #08754f; font: inherit; font-weight: 700; cursor: pointer; }
+button:hover { background: #055b3d; }
+button.secondary { color: #172126; background: #d9e4de; }
+.key-actions { display: grid; grid-template-columns: 1fr; }
+.mono { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; overflow-wrap: anywhere; }
+output { display: block; margin-top: .65rem; font-weight: 700; overflow-wrap: anywhere; }
+output[data-valid="true"] { color: #08754f; }
+output[data-valid="false"], .error { color: #a52626; }
+details { margin-top: 1rem; }
+footer { margin: 2rem 0; color: #4d5d55; }
+a { color: #08754f; }
+@media (prefers-color-scheme: dark) {
+  :root { color: #e8efeb; background: #101a16; }
+  section { border-color: #3d5148; background: #19251f; }
+  .warning { background: #342b17; }
+  input, textarea { color: #edf5f0; background: #101a16; border-color: #52655c; }
+  button.secondary { color: #edf5f0; background: #34443b; }
+  footer { color: #b2c0b7; }
+}
