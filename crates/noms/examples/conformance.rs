@@ -1,6 +1,6 @@
 //! Test-only JSON-lines adapter. Not installed or exported by the library.
 use noms::*;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use std::io::{self, BufRead};
 
 fn input_error() -> NomsError {

@@ -22,7 +22,10 @@ fn cli_signs_from_stdin_and_emits_signature_only() {
         .unwrap();
     let result = child.wait_with_output().unwrap();
     assert!(result.status.success());
-    assert_eq!(String::from_utf8(result.stdout).unwrap().trim(), "535c745819d0f40056f3c46402b4fae4356b3a8897bde99c955d411920e740d781e6dddcbde228e8b86c4383a1003f9f315519ff73bd356f561d19865dc90f09");
+    assert_eq!(
+        String::from_utf8(result.stdout).unwrap().trim(),
+        "535c745819d0f40056f3c46402b4fae4356b3a8897bde99c955d411920e740d781e6dddcbde228e8b86c4383a1003f9f315519ff73bd356f561d19865dc90f09"
+    );
 }
 
 #[test]
@@ -79,7 +82,9 @@ fn inspect_preserves_trailing_newline_from_message_stdin() {
     child.stdin.take().unwrap().write_all(b"line\r\n").unwrap();
     let output = child.wait_with_output().unwrap();
     assert!(output.status.success());
-    assert!(String::from_utf8(output.stdout)
-        .unwrap()
-        .contains("utf8_bytes: 6"));
+    assert!(
+        String::from_utf8(output.stdout)
+            .unwrap()
+            .contains("utf8_bytes: 6")
+    );
 }

@@ -16,7 +16,7 @@ The libraries implement ORIS-001 only. They do not derive wallet keys, manage se
 
 ## Development
 
-Use Node.js 24+ and the pinned pnpm version for development. The npm library supports Node.js 20.19+. Rust requires the stable toolchain; security checks also require Python 3, a C compiler, and `tar`.
+Use Node.js 24+ and the pinned pnpm version for development. The npm library supports Node.js 20.19+. The Rust crates use the 2024 edition and require Rust 1.88 or newer; CI checks both that minimum and stable. Security checks also require Python 3, a C compiler, and `tar`.
 
 ```sh
 pnpm install

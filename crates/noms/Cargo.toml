@@ -1,7 +1,8 @@
 [package]
 name = "noms"
 version = "0.1.1"
-edition = "2021"
+edition = "2024"
+rust-version = "1.88"
 license = "MIT"
 description = "Nano Off-chain Message Signing reference implementation"
 readme = "README.md"

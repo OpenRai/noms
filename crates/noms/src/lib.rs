@@ -407,10 +407,12 @@ mod tests {
     fn rejects_malformed_key_signature_and_account_inputs() {
         assert!(parse_private_key("00").is_err());
         assert!(parse_signature(&"zz".repeat(64)).is_err());
-        assert!(public_key_from_account(
-            "nano_3noms9a1zytox399kygpge6cc7hu1z79ms1cgzojodz8741qi7w5u3nzb8mn "
-        )
-        .is_err());
+        assert!(
+            public_key_from_account(
+                "nano_3noms9a1zytox399kygpge6cc7hu1z79ms1cgzojodz8741qi7w5u3nzb8mn "
+            )
+            .is_err()
+        );
     }
 
     #[test]

@@ -2,6 +2,8 @@
 
 The `noms` binary provides signing, verification, inspection, and offline conformance checks for ORIS-001.
 
+This crate uses the Rust 2024 edition and requires Rust 1.88 or newer.
+
 ```sh
 cargo run -p noms-cli -- self-test
 cargo run -p noms-cli -- inspect --message 'Hello Nano'

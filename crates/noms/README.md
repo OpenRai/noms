@@ -2,6 +2,8 @@
 
 Rust reference implementation of NOMS as specified by ORIS-001.
 
+This crate uses the Rust 2024 edition and requires Rust 1.88 or newer.
+
 ```rust
 use noms::{account_from_public_key, parse_private_key, sign_message, verify_message};
 

@@ -6,6 +6,17 @@ on:
         type: boolean
         default: false
 jobs:
+  msrv:
+    name: Minimum Rust version (1.88)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.88.0
+        with:
+          components: clippy
+      - run: cargo check --workspace --all-targets --locked
+      - run: cargo test --workspace --locked
+      - run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
   matrix:
     name: Conformance (${{ matrix.os }})
     strategy:
@@ -49,9 +60,10 @@ jobs:
   required:
     name: Required conformance
     if: always()
-    needs: matrix
+    needs: [matrix, msrv]
     runs-on: ubuntu-latest
     steps:
-      - run: test "$RESULT" = success
+      - run: test "$MATRIX_RESULT" = success && test "$MSRV_RESULT" = success
         env:
-          RESULT: ${{ needs.matrix.result }}
+          MATRIX_RESULT: ${{ needs.matrix.result }}
+          MSRV_RESULT: ${{ needs.msrv.result }}

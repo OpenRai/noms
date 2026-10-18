@@ -1,3 +1,5 @@
+#![forbid(unsafe_code)]
+
 use clap::{Parser, Subcommand};
 use noms::{
     encode_payload, hash_message, parse_private_key, parse_signature, sign_message, to_hex,

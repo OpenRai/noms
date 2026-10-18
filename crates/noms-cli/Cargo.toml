@@ -1,7 +1,8 @@
 [package]
 name = "noms-cli"
 version = "0.1.1"
-edition = "2021"
+edition = "2024"
+rust-version = "1.88"
 license = "MIT"
 description = "Command-line interface for Nano Off-chain Message Signing"
 repository = "https://github.com/OpenRai/noms"
