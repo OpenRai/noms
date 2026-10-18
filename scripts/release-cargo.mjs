@@ -33,30 +33,42 @@ const updatePackageVersion = (manifest) => manifest.replace(
   /^version = "\d+\.\d+\.\d+"$/m,
   `version = "${nextVersion}"`,
 );
-writeFileSync(manifestPaths[0], updatePackageVersion(manifests[0]));
-writeFileSync(
-  manifestPaths[1],
+const cliDependency = `noms = { path = "../noms", version = "${currentVersion}" }`;
+if (!manifests[1].includes(cliDependency)) {
+  throw new Error(`Could not find the CLI dependency on noms ${currentVersion}.`);
+}
+const updatedManifests = [
+  updatePackageVersion(manifests[0]),
   updatePackageVersion(manifests[1]).replace(
-    `noms = { path = "../noms", version = "${currentVersion}" }`,
+    cliDependency,
     `noms = { path = "../noms", version = "${nextVersion}" }`,
   ),
-);
+];
 
 const lockPath = 'Cargo.lock';
-let lock = readFileSync(lockPath, 'utf8');
+const originalLock = readFileSync(lockPath, 'utf8');
+let lock = originalLock;
 for (const packageName of ['noms', 'noms-cli']) {
-  const pattern = new RegExp(`(\\[\\[package\\]\\]\\nname = "${packageName}"\\nversion = ")${currentVersion}("`);
+  const pattern = new RegExp(`(\\[\\[package\\]\\]\\nname = "${packageName}"\\nversion = ")${currentVersion}"`);
   if (!pattern.test(lock)) throw new Error(`Could not update ${packageName} in Cargo.lock.`);
-  lock = lock.replace(pattern, `$1${nextVersion}$2`);
+  lock = lock.replace(pattern, `$1${nextVersion}"`);
 }
-writeFileSync(lockPath, lock);
-
 const tags = [`noms-v${nextVersion}`, `noms-cli-v${nextVersion}`];
 for (const tag of tags) {
   if (run('git', ['tag', '--list', tag])) throw new Error(`Release tag ${tag} already exists.`);
 }
 
-run('cargo', ['metadata', '--no-deps', '--format-version', '1', '--locked']);
+writeFileSync(manifestPaths[0], updatedManifests[0]);
+writeFileSync(manifestPaths[1], updatedManifests[1]);
+writeFileSync(lockPath, lock);
+try {
+  run('cargo', ['metadata', '--no-deps', '--format-version', '1', '--locked']);
+} catch (error) {
+  writeFileSync(manifestPaths[0], manifests[0]);
+  writeFileSync(manifestPaths[1], manifests[1]);
+  writeFileSync(lockPath, originalLock);
+  throw error;
+}
 run('git', ['add', ...manifestPaths, lockPath]);
 run('git', ['commit', '-m', `release: Rust NOMS ${nextVersion}`]);
 for (const tag of tags) run('git', ['tag', '-a', tag, '-m', `Rust NOMS ${nextVersion}`]);
