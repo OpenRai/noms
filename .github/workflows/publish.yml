@@ -79,7 +79,7 @@ jobs:
       - name: Check npm OIDC support
         run: node scripts/check-npm-version.mjs
       - name: Publish npm package with OIDC
-        run: npm publish artifacts/*.tgz --provenance --ignore-scripts
+        run: npm publish ./artifacts/*.tgz --provenance --ignore-scripts
 
   noms-crate:
     if: github.repository == 'OpenRai/noms' && startsWith(github.ref, 'refs/tags/noms-v')
