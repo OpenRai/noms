@@ -166,6 +166,23 @@ After both crates exist:
 
 The workflow obtains a short-lived token through `rust-lang/crates-io-auth-action`; no crates.io API token is stored in GitHub. Configure the publisher’s environment as `release` to match the GitHub Actions job.
 
+### Release Rust crate versions
+
+Use the root pnpm command to bump both Rust packages together. The command
+updates the two manifests, the CLI's NOMS dependency, and `Cargo.lock`, then
+creates one release commit and both matching tags. Start with a clean working
+tree:
+
+```sh
+pnpm release:cargo:patch
+```
+
+Use `pnpm release:cargo:minor` or `pnpm release:cargo:major` when appropriate.
+Review and push `main` and `noms-v<version>` first. Wait for the `noms` crate
+publish to succeed before pushing `noms-cli-v<version>`; the CLI release
+depends on that version being available from crates.io. Never reuse a version
+or tag that has already been published.
+
 The crates.io registry query found no existing `noms` or `noms-cli` crates at the time of implementation. Recheck immediately before publishing because names can be claimed by another publisher.
 
 On Windows, set key-file ACLs so only the current user can read them; the CLIs can check POSIX mode bits but do not inspect Windows ACLs.
