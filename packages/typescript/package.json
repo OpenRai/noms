@@ -1,18 +1,30 @@
 {
   "name": "@openrai/noms",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Nano Off-chain Message Signing reference implementation",
-  "repository": { "type": "git", "url": "git+https://github.com/OpenRai/noms.git" },
-  "engines": { "node": ">=20.19.0" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OpenRai/noms.git"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  },
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
-    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" }
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
   },
-  "bin": { "noms": "dist/cli.js" },
-  "files": ["dist"],
+  "bin": {
+    "noms": "dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json && node scripts/chmod-bin.mjs",
     "test": "vitest run",
@@ -23,13 +35,15 @@
     "prepublishOnly": "pnpm build && pnpm test"
   },
   "dependencies": {
-    "@noble/hashes": "2.2.0",
-    "@noble/curves": "2.2.0"
+    "@noble/curves": "2.2.0",
+    "@noble/hashes": "2.2.0"
   },
   "devDependencies": {
     "@types/node": "^24.6.0",
     "typescript": "^6.0.2",
     "vitest": "^4.1.2"
   },
-  "publishConfig": { "access": "public" }
+  "publishConfig": {
+    "access": "public"
+  }
 }
