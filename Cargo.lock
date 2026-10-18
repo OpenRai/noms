@@ -199,7 +199,7 @@ checksum = "cf8baf1c55e62ffcace7a9f06f4bd9cd3f0c4beb022d3b367256b91b87513d98"
 
 [[package]]
 name = "noms"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "blake2b_simd",
  "curve25519-dalek",
@@ -208,7 +208,7 @@ dependencies = [
 
 [[package]]
 name = "noms-cli"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "clap",
  "noms",
