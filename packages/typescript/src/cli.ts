@@ -167,6 +167,63 @@ async function signingKeyAndMessage(args: string[]): Promise<{ key: string; mess
   return { key, message };
 }
 
+const HELP: Record<string, string> = {
+  help: `Usage: noms <command> [options]
+
+Commands:
+  sign       Sign an exact message with a Nano account private key
+  verify     Verify a signature against an exact message and Nano account
+  inspect    Show the ORIS-001 payload bytes and digest
+  self-test  Check the built-in NOMS conformance vectors
+
+Run "noms <command> --help" for command-specific options and examples.`,
+  sign: `Usage: noms sign (--key-file PATH | --key-stdin | --prompt-key) (--message TEXT | --message-stdin)
+
+Sign an exact message with a raw 32-byte Nano account private key. A wallet
+seed is not an account private key. The key is never accepted as an argument.
+
+Examples:
+  noms sign --key-file ./account-key.hex --message "Hello, Nano!"
+  noms sign --prompt-key --message "Hello, Nano!"
+  printf %s "Hello, Nano!" | noms sign --key-file ./account-key.hex --message-stdin
+  cat ./account-key.hex | noms sign --key-stdin --message "Hello, Nano!"
+
+On macOS and Linux, restrict a key file with: chmod 600 ./account-key.hex
+The signature is written to stdout as 128 lowercase hexadecimal characters.`,
+  verify: `Usage: noms verify --account NANO_ADDRESS (--signature HEX | --signature-stdin) (--message TEXT | --message-stdin)
+
+Verify a NOMS signature for the exact message and Nano account. Prints "valid"
+or "invalid"; exits with status 0 for valid, 1 for invalid, and 2 for errors.
+
+Examples:
+  noms verify --account nano_... --signature "$SIGNATURE" --message "Hello, Nano!"
+  printf %s "Hello, Nano!" | noms verify --account nano_... --signature "$SIGNATURE" --message-stdin
+  printf %s "$SIGNATURE" | noms verify --account nano_... --signature-stdin --message "Hello, Nano!"
+
+The message is not trimmed, normalized, or otherwise changed.`,
+  inspect: `Usage: noms inspect (--message TEXT | --message-stdin)
+
+Display the exact UTF-8 byte length, ORIS-001 payload, and BLAKE2b-256 digest.
+
+Examples:
+  noms inspect --message "Hello, Nano!"
+  printf %s "Hello, Nano!" | noms inspect --message-stdin`,
+  'self-test': `Usage: noms self-test
+
+Run the built-in known-answer and canonical-signature checks. This needs no
+network connection or Nano node.
+
+Example:
+  noms self-test`,
+};
+
+function showHelp(topic?: string): boolean {
+  const help = HELP[topic ?? 'help'];
+  if (!help) return false;
+  stdout.write(`${help}\n`);
+  return true;
+}
+
 async function run(command: string | undefined, args: string[]): Promise<boolean> {
   if (command === 'sign') {
     const { key, message } = await signingKeyAndMessage(args);
@@ -208,17 +265,27 @@ async function run(command: string | undefined, args: string[]): Promise<boolean
     stdout.write(strictOk ? 'NOMS conformance vectors passed\n' : 'NOMS conformance vectors failed\n');
     return strictOk;
   }
-  if (command === 'help' || command === '--help' || command === undefined) {
-    stdout.write('Usage: noms <sign|verify|inspect|self-test> [--message TEXT|--message-stdin]\n');
-    return true;
-  }
   throw new Error(`unknown command: ${command}`);
 }
 
 const [command, ...args] = process.argv.slice(2);
-run(command, args).then((success) => {
-  if (!success) process.exitCode = 1;
-}).catch((error: unknown) => {
-  stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
-  process.exitCode = 2;
-});
+if (command === undefined || command === '--help' || command === '-h') {
+  showHelp();
+} else if (command === 'help') {
+  if (!showHelp(args[0])) {
+    stderr.write(`unknown help topic: ${args[0]}\n`);
+    process.exitCode = 2;
+  }
+} else if (args.includes('--help') || args.includes('-h')) {
+  if (!showHelp(command)) {
+    stderr.write(`unknown command: ${command}\n`);
+    process.exitCode = 2;
+  }
+} else {
+  run(command, args).then((success) => {
+    if (!success) process.exitCode = 1;
+  }).catch((error: unknown) => {
+    stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
+    process.exitCode = 2;
+  });
+}
