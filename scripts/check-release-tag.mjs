@@ -4,13 +4,16 @@ import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const artifact = process.argv[2];
-if (!['npm', 'noms', 'noms-cli'].includes(artifact)) {
-  throw new Error('usage: node scripts/check-release-tag.mjs <npm|noms|noms-cli>');
+if (!['npm', 'noms-cli-npm', 'noms', 'noms-cli'].includes(artifact)) {
+  throw new Error('usage: node scripts/check-release-tag.mjs <npm|noms-cli-npm|noms|noms-cli>');
 }
 
 let version;
-if (artifact === 'npm') {
-  version = JSON.parse(readFileSync(new URL('../packages/typescript/package.json', import.meta.url), 'utf8')).version;
+if (artifact === 'npm' || artifact === 'noms-cli-npm') {
+  const packagePath = artifact === 'npm'
+    ? '../packages/typescript/package.json'
+    : '../packages/noms-cli/package.json';
+  version = JSON.parse(readFileSync(new URL(packagePath, import.meta.url), 'utf8')).version;
 } else {
   const result = spawnSync('cargo', ['metadata', '--no-deps', '--format-version', '1'], { cwd: root, encoding: 'utf8' });
   if (result.status !== 0) throw new Error(result.stderr || 'cargo metadata failed');

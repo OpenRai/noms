@@ -1,0 +1,31 @@
+{
+  "name": "noms-cli",
+  "version": "0.1.0",
+  "description": "Command-line interface for Nano Off-chain Message Signing",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OpenRai/noms.git"
+  },
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "bin": {
+    "noms-cli": "bin/noms.js"
+  },
+  "files": [
+    "bin"
+  ],
+  "scripts": {
+    "release:patch": "pnpm version patch --tag-version-prefix noms-cli-npm-v --message \"release: noms-cli %s\"",
+    "release:minor": "pnpm version minor --tag-version-prefix noms-cli-npm-v --message \"release: noms-cli %s\"",
+    "release:major": "pnpm version major --tag-version-prefix noms-cli-npm-v --message \"release: noms-cli %s\""
+  },
+  "dependencies": {
+    "@openrai/noms": "^0.1.1"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

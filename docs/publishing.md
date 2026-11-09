@@ -5,10 +5,17 @@
 | Registry | Name | Purpose |
 | --- | --- | --- |
 | npm | `@openrai/noms` | TypeScript library and `noms` executable |
+| npm | `noms-cli` | Direct `npx noms-cli` entrypoint for the TypeScript CLI |
 | crates.io | `noms` | Rust library |
 | crates.io | `noms-cli` | Rust `noms` executable |
 
 The browser playground is private workspace package `@openrai/noms-site`; it is not published to npm.
+
+Use `npx noms-cli` for the direct npm CLI command. That package forwards to the
+CLI included in `@openrai/noms`, keeping one TypeScript implementation. The
+unscoped npm name `noms` is already owned by an unrelated package, so it cannot
+be used as the NOMS npm package name; use `npx @openrai/noms` for the scoped
+package's `noms` executable.
 
 Use pnpm for workspace installs, builds, and tests. The GitHub release workflow
 uses npm only for the final registry publish: it creates a tarball in the
@@ -95,6 +102,37 @@ does not create the organization or grant publishing rights. Do not share
 `.npmrc` contents or registry tokens when troubleshooting.
 
 After the package exists, the trusted publisher's workflow filename and environment must match the workflow exactly. npm checks that `packages/typescript/package.json` names this repository in its `repository.url`.
+
+## npm CLI package
+
+The unscoped npm package `noms-cli` is separate from both the scoped NOMS
+library and the crates.io crate with the same name. It exposes the `noms-cli`
+command and depends on `@openrai/noms`; use `npx noms-cli` to run it.
+
+Bootstrap `noms-cli@0.1.0` once from `packages/noms-cli` with an npm account
+that can publish the unscoped package. The manifest already sets public access:
+
+```sh
+cd packages/noms-cli
+npm publish
+```
+
+Then add a separate npm Trusted Publisher to the `noms-cli` package. Use the
+same GitHub Actions identity as above: repository `OpenRai/noms`, workflow
+`publish.yml`, environment `release`. This one-time bootstrap is needed because
+npm's trusted publisher settings are attached to an existing package. The
+`noms-cli-npm-v*` tag workflow publishes subsequent versions through OIDC.
+
+Use the root command to bump the wrapper's independent version:
+
+```sh
+pnpm release:noms-cli-npm:patch
+```
+
+This starts at `0.1.0`, creates the `noms-cli-npm-v<version>` tag, and publishes
+the package after the same extended conformance and provenance checks. Push the
+release commit and exact tag reported by pnpm. The Rust crate tag remains
+`noms-cli-v<version>` and is independent of the npm wrapper's version.
 
 ### Release an npm version
 

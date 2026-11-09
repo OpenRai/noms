@@ -7,6 +7,7 @@ import assert from 'node:assert/strict';
 
 const root = process.cwd();
 const directory = mkdtempSync(join(tmpdir(), 'noms-artifacts-'));
+const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const env = { ...process.env };
 for (const name of Object.keys(env)) if (/^npm_config_/i.test(name)) delete env[name];
 function run(command, args, options = {}) {
@@ -20,19 +21,32 @@ function run(command, args, options = {}) {
   if (result.error || result.status !== 0) throw new Error(`${command}: ${result.error?.message ?? result.stderr}\n${result.stdout}`);
   return result.stdout;
 }
+function pack(cwd) {
+  const result = JSON.parse(run(npmCommand, ['pack', '--json', '--pack-destination', directory], { cwd }));
+  const artifact = Array.isArray(result) ? result[0] : Object.values(result)[0];
+  if (!artifact?.filename) throw new Error(`npm pack did not report an archive for ${cwd}`);
+  return artifact;
+}
 try {
   console.log('Checking npm tarball in an isolated consumer project');
   const npmDirectory = join(directory, 'npm');
   mkdirSync(npmDirectory);
   writeFileSync(join(npmDirectory, 'package.json'), '{"private":true,"type":"module"}\n');
-  const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-  const packed = JSON.parse(run(npmCommand, ['pack', '--json', '--pack-destination', directory], { cwd: resolve('packages/typescript') }))[0];
+  const npxCommand = process.platform === 'win32' ? npmCommand : 'npx';
+  const packed = pack(resolve('packages/typescript'));
   run(npmCommand, ['install', '--ignore-scripts', '--no-audit', '--no-fund', '--prefer-offline', join(directory, packed.filename)], { cwd: npmDirectory });
+  const cliPacked = pack(resolve('packages/noms-cli'));
+  run(npmCommand, ['install', '--ignore-scripts', '--no-audit', '--no-fund', '--prefer-offline', join(directory, cliPacked.filename)], { cwd: npmDirectory });
   const installed = join(npmDirectory, 'node_modules/@openrai/noms');
   const adapter = join(npmDirectory, 'adapter.mjs');
   writeFileSync(adapter, `import {readFileSync} from 'node:fs'; import assert from 'node:assert/strict'; import * as api from '@openrai/noms'; import {runCase} from ${JSON.stringify(pathToFileURL(resolve('scripts/lib/conformance.mjs')).href)}; const suite=JSON.parse(readFileSync(${JSON.stringify(resolve('conformance/suite.json'))})); for(const test of suite.cases) assert.deepEqual(runCase(api,test),test.expected,test.id); console.log(suite.cases.length);`);
   const count = Number(run(process.execPath, [adapter], { cwd: npmDirectory }).trim());
   assert.equal(count, JSON.parse(readFileSync('conformance/manifest.json')).case_count);
+  const cliCommand = process.platform === 'win32'
+    ? ['exec', '--', 'noms-cli', 'self-test']
+    : ['--yes', 'noms-cli', 'self-test'];
+  const cliSelfTest = run(npxCommand, cliCommand, { cwd: npmDirectory }).trim();
+  assert.equal(cliSelfTest, 'NOMS conformance vectors passed');
   console.log('Checking Cargo archives and their isolated native tests');
   run('cargo', ['package', '--workspace', '--locked', '--offline', '--allow-dirty']);
   const version = JSON.parse(readFileSync('packages/typescript/package.json')).version;
@@ -50,6 +64,6 @@ try {
   console.log('Checking interoperability of the installed artifact CLIs');
   run(process.execPath, ['scripts/check-cli-interop.mjs'], { env: { ...env, NOMS_JS_CLI: join(installed, 'dist/cli.js'), NOMS_RUST_CLI: join(target, `debug/noms${process.platform === 'win32' ? '.exe' : ''}`) } });
   mkdirSync('artifacts/conformance', { recursive: true });
-  writeFileSync('artifacts/conformance/artifact-report.json', JSON.stringify({ npm: { name: '@openrai/noms', version, fixture_cases: count, integrity: packed.integrity }, rust: { versions, isolated_tests: true }, installed_cli_corpus: true }, null, 2));
+  writeFileSync('artifacts/conformance/artifact-report.json', JSON.stringify({ npm: { name: '@openrai/noms', version, fixture_cases: count, integrity: packed.integrity }, npm_cli: { name: 'noms-cli', version: JSON.parse(readFileSync('packages/noms-cli/package.json')).version, integrity: cliPacked.integrity, self_test: true }, rust: { versions, isolated_tests: true }, installed_cli_corpus: true }, null, 2));
   console.log('Installed npm artifact, isolated Rust crate tests, and installed CLI corpus passed');
 } finally { rmSync(directory, { recursive: true, force: true }); }

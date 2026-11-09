@@ -7,6 +7,7 @@ ORIS-001 is the normative contract. This repository provides executable examples
 ## Packages and tools
 
 - `@openrai/noms`: TypeScript library and `noms` CLI.
+- `noms-cli`: npm package exposing the `noms-cli` executable.
 - `noms`: Rust library crate.
 - `noms-cli`: native Rust `noms` executable.
 - `site/`: browser-only signing and verification playground, published with GitHub Pages.
@@ -25,6 +26,8 @@ pnpm conformance
 ```
 
 Run the TypeScript CLI with `pnpm --filter @openrai/noms exec noms self-test`.
+Run it without a local install with `npx noms-cli self-test` after the npm CLI
+package is published.
 Run the Rust CLI with `cargo run -p noms-cli -- self-test`.
 Run `pnpm run noms-site` to rebuild and preview the playground at `http://127.0.0.1:4173/noms/`.
 

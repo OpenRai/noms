@@ -14,6 +14,7 @@ const valid = verifyMessage(message, signature, 'nano_…');
 ## CLI
 
 ```sh
+npx noms-cli self-test
 noms sign --key-file ./account-key.hex --message "Hello world"
 printf %s "$KEY" | noms sign --key-stdin --message "Hello world"
 noms verify --account nano_… --signature "$SIGNATURE" --message "Hello world"
