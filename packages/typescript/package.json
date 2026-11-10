@@ -1,6 +1,6 @@
 {
   "name": "@openrai/noms",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Nano Off-chain Message Signing reference implementation",
   "repository": {
     "type": "git",
