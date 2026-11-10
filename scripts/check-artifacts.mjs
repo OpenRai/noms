@@ -9,6 +9,7 @@ import { createHash } from 'node:crypto';
 const root = process.cwd();
 const directory = mkdtempSync(join(tmpdir(), 'noms-artifacts-'));
 const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+const pnpmCommand = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
 const env = { ...process.env };
 for (const name of Object.keys(env)) if (/^npm_config_/i.test(name)) delete env[name];
 function run(command, args, options = {}) {
@@ -18,7 +19,7 @@ function run(command, args, options = {}) {
     command = process.execPath;
     args = [cli, ...args];
   }
-  const result = spawnSync(command, args, { encoding: 'utf8', env, timeout: 600000, maxBuffer: 32 * 1024 * 1024, ...options });
+  const result = spawnSync(command, args, { encoding: 'utf8', env, timeout: 600000, maxBuffer: 32 * 1024 * 1024, shell: command === 'pnpm.cmd', ...options });
   if (result.error || result.status !== 0) throw new Error(`${command}: ${result.error?.message ?? result.stderr}\n${result.stdout}`);
   return result.stdout;
 }
@@ -29,7 +30,7 @@ function pack(cwd) {
   return artifact;
 }
 function packWorkspacePackage(cwd, name, version) {
-  run('pnpm', ['pack', '--pack-destination', directory], { cwd });
+  run(pnpmCommand, ['pack', '--pack-destination', directory], { cwd });
   const filename = `${name}-${version}.tgz`;
   const integrity = `sha512-${createHash('sha512').update(readFileSync(join(directory, filename))).digest('base64')}`;
   return { filename, integrity };
