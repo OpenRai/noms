@@ -61,7 +61,7 @@ jobs:
       - name: Pack npm CLI package
         if: startsWith(github.ref, 'refs/tags/noms-cli-npm-v')
         working-directory: packages/noms-cli
-        run: mkdir -p artifacts && npm pack --pack-destination artifacts
+        run: mkdir -p artifacts && pnpm pack --pack-destination artifacts
       - uses: actions/upload-artifact@v4
         if: startsWith(github.ref, 'refs/tags/noms-cli-npm-v')
         with:

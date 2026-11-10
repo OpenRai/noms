@@ -12,18 +12,27 @@
     "node": ">=20.19.0"
   },
   "bin": {
-    "noms-cli": "bin/noms.js"
+    "noms": "dist/cli.js",
+    "noms-cli": "dist/cli.js"
   },
   "files": [
-    "bin"
+    "dist"
   ],
   "scripts": {
+    "build": "tsc -p tsconfig.json && node scripts/chmod-bin.mjs",
+    "test": "vitest run",
+    "prepublishOnly": "pnpm build && pnpm test",
     "release:patch": "pnpm version patch --tag-version-prefix noms-cli-npm-v --message \"release: noms-cli %s\"",
     "release:minor": "pnpm version minor --tag-version-prefix noms-cli-npm-v --message \"release: noms-cli %s\"",
     "release:major": "pnpm version major --tag-version-prefix noms-cli-npm-v --message \"release: noms-cli %s\""
   },
   "dependencies": {
-    "@openrai/noms": "^0.1.1"
+    "@openrai/noms": "workspace:^"
+  },
+  "devDependencies": {
+    "@types/node": "^24.6.0",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.2"
   },
   "publishConfig": {
     "access": "public"

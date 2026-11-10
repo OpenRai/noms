@@ -6,8 +6,8 @@ ORIS-001 is the normative contract. This repository provides executable examples
 
 ## Packages and tools
 
-- `@openrai/noms`: TypeScript library and `noms` CLI.
-- `noms-cli`: npm package exposing the `noms-cli` executable.
+- `@openrai/noms`: TypeScript NOMS library.
+- `noms-cli`: npm package exposing `noms` and `noms-cli` executables.
 - `noms`: Rust library crate.
 - `noms-cli`: native Rust `noms` executable.
 - `site/`: browser-only signing and verification playground, published with GitHub Pages.
@@ -25,9 +25,9 @@ pnpm exec playwright install chromium firefox webkit
 pnpm conformance
 ```
 
-Run the TypeScript CLI with `pnpm --filter @openrai/noms exec noms self-test`.
+Run the TypeScript CLI with `pnpm --filter noms-cli exec noms self-test`.
 Run it without a local install with `npx noms-cli self-test` after the npm CLI
-package is published.
+package is published. The same package also supports `npx --package noms-cli noms`.
 Run the Rust CLI with `cargo run -p noms-cli -- self-test`.
 Run `pnpm run noms-site` to rebuild and preview the playground at `http://127.0.0.1:4173/noms/`.
 
@@ -53,11 +53,12 @@ mutations, and 120-second parser/verification fuzz campaigns in each language.
 duration for diagnosis. Reports, executed case IDs, seeds, and failure inputs
 are written to `artifacts/conformance/`.
 
-The TypeScript build is in `packages/typescript/dist/`, the production site is
-in `site-dist/`, and Cargo package archives are in `target/package/`. Artifact
-checks install npm tarballs and Cargo archives into temporary consumer projects
-and remove those projects afterward. Local Cargo packaging permits uncommitted
-changes; CI validates the exact checkout. Publishing is a separate workflow.
+The TypeScript library build is in `packages/typescript/dist/`, the CLI build
+is in `packages/noms-cli/dist/`, the production site is in `site-dist/`, and
+Cargo package archives are in `target/package/`. Artifact checks install npm
+tarballs and Cargo archives into temporary consumer projects and remove those
+projects afterward. Local Cargo packaging permits uncommitted changes; CI
+validates the exact checkout. Publishing is a separate workflow.
 
 ### Updating the protocol corpus
 
@@ -80,7 +81,7 @@ intentionally stricter than Nano V28.2's verifier. The original deterministic
 signatures remain unchanged. CI reports deliberate Nano acceptance differences
 separately from unexplained interoperability failures.
 
-After publishing, use `npx --yes --package @openrai/noms noms self-test` or install the native Rust binary with `cargo install noms-cli` and run `noms self-test`.
+After publishing, use `npx noms-cli self-test` or install the native Rust binary with `cargo install noms-cli` and run `noms self-test`.
 
 Both CLIs accept explicit `--message TEXT` or exact UTF-8 `--message-stdin` input. Signing keys come from a permission-restricted file, a hidden prompt, or stdin; keys are never accepted as command-line arguments. `--signature-stdin` lets a verifier consume a piped signature.
 

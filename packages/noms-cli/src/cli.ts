@@ -7,7 +7,7 @@ import {
   hashMessage,
   signMessage,
   verifyMessage,
-} from './index.js';
+} from '@openrai/noms';
 
 import { TEST_PRIVATE_KEY, TEST_ACCOUNT, TEST_MESSAGE, TEST_SIGNATURE, EMPTY_SIGNATURE, EMPTY_DIGEST, NONCANONICAL_SIGNATURE } from './self-test-vectors.js';
 

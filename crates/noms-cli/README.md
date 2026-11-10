@@ -20,7 +20,7 @@ cargo run -p noms-cli -- sign --key-file ./account-key.hex --message 'Hello Nano
 For shell pipelines, read the signing key from a file or prompt and send the signature to the verifier:
 
 ```sh
-npx --yes --package @openrai/noms noms sign --key-file ./account-key.hex --message 'Hello Nano' |
+npx --yes noms-cli sign --key-file ./account-key.hex --message 'Hello Nano' |
   cargo run -p noms-cli -- verify --account nano_... --message 'Hello Nano' --signature-stdin
 ```
 

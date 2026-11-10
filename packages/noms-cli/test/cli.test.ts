@@ -9,6 +9,13 @@ const cli = fileURLToPath(new URL('../dist/cli.js', import.meta.url));
 const run = (...args: string[]) => spawnSync(process.execPath, [cli, ...args], { encoding: 'utf8' });
 
 describe('noms CLI', () => {
+  it.each(['sign', 'verify', 'inspect', 'self-test'])('shows examples in %s help', (command) => {
+    const result = run(command, '--help');
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain(`Usage: noms ${command}`);
+    expect(result.stdout).toContain('Example');
+  });
+
   it('runs built-in known-answer vectors offline', () => {
     const result = run('self-test');
     expect(result.status).toBe(0);

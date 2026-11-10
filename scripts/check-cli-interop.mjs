@@ -7,7 +7,7 @@ import { validateSuite } from './lib/conformance.mjs';
 
 const suite = validateSuite(JSON.parse(readFileSync('conformance/suite.json')));
 const tools = [
-  { name: 'javascript', command: process.execPath, args: [process.env.NOMS_JS_CLI ?? 'packages/typescript/dist/cli.js'] },
+  { name: 'javascript', command: process.execPath, args: [process.env.NOMS_JS_CLI ?? 'packages/noms-cli/dist/cli.js'] },
   { name: 'rust', command: process.env.NOMS_RUST_CLI ?? `target/debug/noms${process.platform === 'win32' ? '.exe' : ''}`, args: [] },
 ];
 function run(tool, args, input) {

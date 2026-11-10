@@ -19,14 +19,11 @@
       "import": "./dist/index.js"
     }
   },
-  "bin": {
-    "noms": "dist/cli.js"
-  },
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json && node scripts/chmod-bin.mjs",
+    "build": "tsc -p tsconfig.json",
     "test": "vitest run",
     "test:api": "tsc -p test/api/tsconfig.json",
     "release:patch": "pnpm version patch --tag-version-prefix npm-v --message \"release: @openrai/noms %s\"",

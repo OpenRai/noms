@@ -198,8 +198,18 @@ importers:
   packages/noms-cli:
     dependencies:
       '@openrai/noms':
-        specifier: ^0.1.1
-        version: 0.1.1
+        specifier: workspace:^
+        version: link:../typescript
+    devDependencies:
+      '@types/node':
+        specifier: ^24.6.0
+        version: 24.19.2
+      typescript:
+        specifier: ^6.0.2
+        version: 6.0.3
+      vitest:
+        specifier: ^4.1.2
+        version: 4.1.11(@types/node@24.19.2)(vite@8.3.4(@types/node@24.19.2))
 
   packages/typescript:
     dependencies:
@@ -248,11 +258,6 @@ packages:
   '@noble/hashes@2.2.0':
     resolution: {integrity: sha512-IYqDGiTXab6FniAgnSdZwgWbomxpy9FtYvLKs7wCUs2a8RkITG+DFGO1DM9cr+E3/RgADRpFjrKVaJ1z6sjtEg==}
     engines: {node: '>= 20.19.0'}
-
-  '@openrai/noms@0.1.1':
-    resolution: {integrity: sha512-q3/8JkOkYpzs2urDMx/f5Rsm2Tn6G3C5sN22t1ws8FkFNhk2vOHqnJ8WTvzn9ncm4WgrAp5R6HRSjYc/35M5mQ==}
-    engines: {node: '>=20.19.0'}
-    hasBin: true
 
   '@oxc-project/types@0.153.0':
     resolution: {integrity: sha512-jSNrRIyvPVLL5E1z/tS5zLAprosGz/FuI1PWwEOz59j3E4TTTzSpqKb/RDGqJhhW0QHYISGXxq582wGx6T11Tw==}
@@ -683,11 +688,6 @@ snapshots:
       '@noble/hashes': 2.2.0
 
   '@noble/hashes@2.2.0': {}
-
-  '@openrai/noms@0.1.1':
-    dependencies:
-      '@noble/curves': 2.2.0
-      '@noble/hashes': 2.2.0
 
   '@oxc-project/types@0.153.0': {}
 

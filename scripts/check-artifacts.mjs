@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve, dirname } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 
 const root = process.cwd();
 const directory = mkdtempSync(join(tmpdir(), 'noms-artifacts-'));
@@ -27,6 +28,12 @@ function pack(cwd) {
   if (!artifact?.filename) throw new Error(`npm pack did not report an archive for ${cwd}`);
   return artifact;
 }
+function packWorkspacePackage(cwd, name, version) {
+  run('pnpm', ['pack', '--pack-destination', directory], { cwd });
+  const filename = `${name}-${version}.tgz`;
+  const integrity = `sha512-${createHash('sha512').update(readFileSync(join(directory, filename))).digest('base64')}`;
+  return { filename, integrity };
+}
 try {
   console.log('Checking npm tarball in an isolated consumer project');
   const npmDirectory = join(directory, 'npm');
@@ -35,9 +42,10 @@ try {
   const npxCommand = process.platform === 'win32' ? npmCommand : 'npx';
   const packed = pack(resolve('packages/typescript'));
   run(npmCommand, ['install', '--ignore-scripts', '--no-audit', '--no-fund', '--prefer-offline', join(directory, packed.filename)], { cwd: npmDirectory });
-  const cliPacked = pack(resolve('packages/noms-cli'));
+  const cliVersion = JSON.parse(readFileSync('packages/noms-cli/package.json')).version;
+  const cliPacked = packWorkspacePackage(resolve('packages/noms-cli'), 'noms-cli', cliVersion);
   run(npmCommand, ['install', '--ignore-scripts', '--no-audit', '--no-fund', '--prefer-offline', join(directory, cliPacked.filename)], { cwd: npmDirectory });
-  const installed = join(npmDirectory, 'node_modules/@openrai/noms');
+  const installedCli = join(npmDirectory, 'node_modules/noms-cli');
   const adapter = join(npmDirectory, 'adapter.mjs');
   writeFileSync(adapter, `import {readFileSync} from 'node:fs'; import assert from 'node:assert/strict'; import * as api from '@openrai/noms'; import {runCase} from ${JSON.stringify(pathToFileURL(resolve('scripts/lib/conformance.mjs')).href)}; const suite=JSON.parse(readFileSync(${JSON.stringify(resolve('conformance/suite.json'))})); for(const test of suite.cases) assert.deepEqual(runCase(api,test),test.expected,test.id); console.log(suite.cases.length);`);
   const count = Number(run(process.execPath, [adapter], { cwd: npmDirectory }).trim());
@@ -47,6 +55,10 @@ try {
     : ['--yes', 'noms-cli', 'self-test'];
   const cliSelfTest = run(npxCommand, cliCommand, { cwd: npmDirectory }).trim();
   assert.equal(cliSelfTest, 'NOMS conformance vectors passed');
+  const nomsAlias = process.platform === 'win32'
+    ? ['exec', '--', 'noms', 'self-test']
+    : ['--yes', '--package', 'noms-cli', 'noms', 'self-test'];
+  assert.equal(run(npxCommand, nomsAlias, { cwd: npmDirectory }).trim(), 'NOMS conformance vectors passed');
   console.log('Checking Cargo archives and their isolated native tests');
   run('cargo', ['package', '--workspace', '--locked', '--offline', '--allow-dirty']);
   const version = JSON.parse(readFileSync('packages/typescript/package.json')).version;
@@ -62,8 +74,8 @@ try {
   run('cargo', ['test', '--workspace', '--locked', '--offline', '--target-dir', target], { cwd: rustDirectory });
   run('cargo', ['build', '--locked', '--offline', '-p', 'noms-cli', '--target-dir', target], { cwd: rustDirectory });
   console.log('Checking interoperability of the installed artifact CLIs');
-  run(process.execPath, ['scripts/check-cli-interop.mjs'], { env: { ...env, NOMS_JS_CLI: join(installed, 'dist/cli.js'), NOMS_RUST_CLI: join(target, `debug/noms${process.platform === 'win32' ? '.exe' : ''}`) } });
+  run(process.execPath, ['scripts/check-cli-interop.mjs'], { env: { ...env, NOMS_JS_CLI: join(installedCli, 'dist/cli.js'), NOMS_RUST_CLI: join(target, `debug/noms${process.platform === 'win32' ? '.exe' : ''}`) } });
   mkdirSync('artifacts/conformance', { recursive: true });
-  writeFileSync('artifacts/conformance/artifact-report.json', JSON.stringify({ npm: { name: '@openrai/noms', version, fixture_cases: count, integrity: packed.integrity }, npm_cli: { name: 'noms-cli', version: JSON.parse(readFileSync('packages/noms-cli/package.json')).version, integrity: cliPacked.integrity, self_test: true }, rust: { versions, isolated_tests: true }, installed_cli_corpus: true }, null, 2));
+  writeFileSync('artifacts/conformance/artifact-report.json', JSON.stringify({ npm: { name: '@openrai/noms', version, fixture_cases: count, integrity: packed.integrity }, npm_cli: { name: 'noms-cli', version: cliVersion, integrity: cliPacked.integrity, self_test: true }, rust: { versions, isolated_tests: true }, installed_cli_corpus: true }, null, 2));
   console.log('Installed npm artifact, isolated Rust crate tests, and installed CLI corpus passed');
 } finally { rmSync(directory, { recursive: true, force: true }); }

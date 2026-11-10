@@ -3,8 +3,8 @@
   "private": true,
   "packageManager": "pnpm@12.14.0",
   "scripts": {
-    "build": "pnpm --filter @openrai/noms build && pnpm --filter @openrai/noms-site build",
-    "test": "pnpm --filter @openrai/noms test && pnpm --filter @openrai/noms-site test",
+    "build": "pnpm --filter @openrai/noms build && pnpm --filter noms-cli build && pnpm --filter @openrai/noms-site build",
+    "test": "pnpm --filter @openrai/noms test && pnpm --filter noms-cli test && pnpm --filter @openrai/noms-site test",
     "site:build": "pnpm --filter @openrai/noms-site build",
     "noms-site": "pnpm site:build && pnpm --filter @openrai/noms-site preview --host 127.0.0.1",
     "release:npm:patch": "pnpm --filter @openrai/noms run release:patch",

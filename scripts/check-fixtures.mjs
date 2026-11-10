@@ -77,7 +77,7 @@ const vectors = {
   vectors: [['unicode-emoji', 1], ['empty', 0]].map(([name, n]) => ({ name, message: find(`sign-0-${n}`).input.message, message_utf8_hex: find(`message-${n}`).expected.message_utf8_hex, payload_hex: find(`message-${n}`).expected.payload_hex, digest: find(`message-${n}`).expected.digest, signature: find(`sign-0-${n}`).expected.signature })),
 };
 for (const [name, data] of [
-  ['packages/typescript/src/self-test-vectors.ts', ts],
+  ['packages/noms-cli/src/self-test-vectors.ts', ts],
   ['crates/noms-cli/src/self_test_vectors.rs', rust],
   ['conformance/vectors.json', JSON.stringify(vectors, null, 2) + '\n'],
   ['crates/noms/tests/data/suite.json', suiteBytes.toString('utf8')],

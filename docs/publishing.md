@@ -4,18 +4,16 @@
 
 | Registry | Name | Purpose |
 | --- | --- | --- |
-| npm | `@openrai/noms` | TypeScript library and `noms` executable |
-| npm | `noms-cli` | Direct `npx noms-cli` entrypoint for the TypeScript CLI |
+| npm | `@openrai/noms` | TypeScript NOMS library |
+| npm | `noms-cli` | TypeScript CLI with `noms` and `noms-cli` executables |
 | crates.io | `noms` | Rust library |
 | crates.io | `noms-cli` | Rust `noms` executable |
 
 The browser playground is private workspace package `@openrai/noms-site`; it is not published to npm.
 
-Use `npx noms-cli` for the direct npm CLI command. That package forwards to the
-CLI included in `@openrai/noms`, keeping one TypeScript implementation. The
-unscoped npm name `noms` is already owned by an unrelated package, so it cannot
-be used as the NOMS npm package name; use `npx @openrai/noms` for the scoped
-package's `noms` executable.
+Use `npx noms-cli` or `npx --package noms-cli noms` to run the TypeScript CLI.
+The unscoped npm package name `noms` is already owned by an unrelated package,
+so the NOMS CLI is distributed through `noms-cli` under those executable names.
 
 Use pnpm for workspace installs, builds, and tests. The GitHub release workflow
 uses npm only for the final registry publish: it creates a tarball in the
@@ -81,11 +79,9 @@ publishes the version and description from `packages/typescript/package.json`
 as a normal version; the placeholder can remain in the package's version
 history.
 
-Before publishing, confirm that `packages/typescript/package.json` has the CLI
-entry as `"bin": { "noms": "dist/cli.js" }` (without a leading `./`). npm
-11.17 reported that the entry was invalid and removed it when given
-`"./dist/cli.js"`; inspect the packed `package.json` and confirm it retains the
-`noms` entry:
+`@openrai/noms` is library-only. The CLI executables are declared by
+`packages/noms-cli/package.json`; inspect its packed manifest and confirm both
+entries point to `dist/cli.js`:
 
 ```sh
 npm pack
@@ -106,8 +102,9 @@ After the package exists, the trusted publisher's workflow filename and environm
 ## npm CLI package
 
 The unscoped npm package `noms-cli` is separate from both the scoped NOMS
-library and the crates.io crate with the same name. It exposes the `noms-cli`
-command and depends on `@openrai/noms`; use `npx noms-cli` to run it.
+library and the crates.io crate with the same name. It contains the TypeScript
+CLI and depends on `@openrai/noms`; use `npx noms-cli` or
+`npx --package noms-cli noms` to run it.
 
 Bootstrap `noms-cli@0.1.0` once from `packages/noms-cli` with an npm account
 that can publish the unscoped package. The manifest already sets public access:
@@ -123,16 +120,16 @@ same GitHub Actions identity as above: repository `OpenRai/noms`, workflow
 npm's trusted publisher settings are attached to an existing package. The
 `noms-cli-npm-v*` tag workflow publishes subsequent versions through OIDC.
 
-Use the root command to bump the wrapper's independent version:
+Use the root command to bump the CLI's independent version:
 
 ```sh
 pnpm release:noms-cli-npm:patch
 ```
 
-This starts at `0.1.0`, creates the `noms-cli-npm-v<version>` tag, and publishes
-the package after the same extended conformance and provenance checks. Push the
-release commit and exact tag reported by pnpm. The Rust crate tag remains
-`noms-cli-v<version>` and is independent of the npm wrapper's version.
+This creates the `noms-cli-npm-v<version>` tag and publishes the package after
+the same extended conformance and provenance checks. Push the release commit
+and exact tag reported by pnpm. The Rust crate tag remains
+`noms-cli-v<version>` and is independent of the npm package version.
 
 ### Release an npm version
 
@@ -145,13 +142,18 @@ Choose the bump from the change:
 
 | Command | Version change | Use |
 | --- | --- | --- |
-| `pnpm release:npm:patch` | `0.1.0` → `0.1.1` | Backward-compatible fixes; use this for the first OIDC release. |
-| `pnpm release:npm:minor` | `0.1.0` → `0.2.0` | Backward-compatible features. |
-| `pnpm release:npm:major` | `0.1.0` → `1.0.0` | Breaking API changes. |
+| `pnpm release:npm:patch` | patch increment | Backward-compatible fixes. |
+| `pnpm release:npm:minor` | minor increment | Backward-compatible features or package-level breaking changes before 1.0. |
+| `pnpm release:npm:major` | major increment | Breaking API changes after 1.0. |
 
-The current npm version is `0.1.0`, so the first OIDC validation release uses
-`patch`. From the repository root, first run the full checks and push the
-reviewed implementation changes:
+The TypeScript library and CLI are independently versioned. For a coordinated
+release that changes both, publish the library first, then the CLI. This makes
+the CLI's workspace dependency resolve to an already-published library version.
+Each target requires a clean tree and creates its own release commit and tag.
+
+For example, when the library is `0.1.2` and the CLI is `0.1.0`, a package
+boundary change that removes the CLI binary from the library can release as
+`@openrai/noms@0.2.0` and `noms-cli@0.1.1`:
 
 ```sh
 pnpm install --frozen-lockfile
@@ -160,22 +162,22 @@ node scripts/check-fixtures.mjs --release
 git status --short
 ```
 
-Review and commit the release implementation files, then push `main`. After
-that push succeeds, run the selected release command from the repository root.
-For the first OIDC publish:
+Run conformance and commit/push the implementation first. Then create, review,
+and push the library release:
 
 ```sh
-pnpm release:npm:patch
+pnpm release:npm:minor
+git push origin main
+git push origin npm-v0.2.0
 ```
 
-For the current version, pnpm creates commit `release: @openrai/noms 0.1.1`
-and annotated tag `npm-v0.1.1`. Review the result before pushing:
+Wait for the library publish workflow to succeed. Then create and push the CLI
+patch release:
 
 ```sh
-git show --stat --oneline HEAD
-git tag --list --points-at HEAD
+pnpm release:noms-cli-npm:patch
 git push origin main
-git push origin npm-v0.1.1
+git push origin noms-cli-npm-v0.1.1
 ```
 
 Pushing the tag starts `.github/workflows/publish.yml`; creating a GitHub
@@ -235,10 +237,10 @@ After the initial releases, install the Rust executable and pipe a TypeScript si
 
 ```sh
 cargo install noms-cli
-npx --yes --package @openrai/noms noms sign --key-file ./account-key.hex --message 'Hello Nano' |
+npx --yes noms-cli sign --key-file ./account-key.hex --message 'Hello Nano' |
   noms verify --account nano_... --message 'Hello Nano' --signature-stdin
 ```
 
-To run the reverse direction, use `noms sign --key-file ./account-key.hex --message 'Hello Nano'` and pipe it to `npx --yes --package @openrai/noms noms verify --account nano_... --message 'Hello Nano' --signature-stdin`. Use only test keys in these examples.
+To run the reverse direction, use `npx --yes noms-cli sign --key-file ./account-key.hex --message 'Hello Nano'` and pipe it to `npx --yes noms-cli verify --account nano_... --message 'Hello Nano' --signature-stdin`. Use only test keys in these examples.
 
 Official references: [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/) and [crates.io trusted publishing](https://crates.io/docs/trusted-publishing).
